@@ -29,4 +29,4 @@ backend/routes/__init__.py
 backend/services/__init__.py
 backend/services/__pycache__
 stock/package-lock.json
-stock/frontend/.gitignore
+.gitignore
