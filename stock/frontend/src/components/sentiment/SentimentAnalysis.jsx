@@ -97,7 +97,7 @@ const SentimentAnalysis = ({ symbol }) => {
               <div className="text-sm text-gray-600">Change %</div>
             </div>
           </div>
-        </div>
+      </div>
       )}
 
       {/* Sentiment Metrics */}
@@ -141,13 +141,13 @@ const SentimentAnalysis = ({ symbol }) => {
           </div>
         </div>
       )}
-
+      
       {data.message && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
           <div className="text-yellow-800">{data.message}</div>
-        </div>
+      </div>
       )}
-
+      
       <div className="text-sm text-gray-500 text-center">
         Source: {data.source} • Last updated: {new Date(data.timestamp).toLocaleString()}
       </div>

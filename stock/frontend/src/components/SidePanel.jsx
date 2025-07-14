@@ -4,9 +4,7 @@ import { BarChart2, TrendingUp, Filter, Settings, GitCompare } from 'lucide-reac
 const SidePanel = ({ activeSection, onSectionChange }) => {
   const sections = [
     { id: 'fundamental', label: 'Fundamental', icon: <BarChart2 size={20} /> },
-    { id: 'comparison', label: 'Comparison', icon: <GitCompare size={20} /> },
     { id: 'screener', label: 'Screener', icon: <Filter size={20} /> },
-    { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
   ];
 
   return (

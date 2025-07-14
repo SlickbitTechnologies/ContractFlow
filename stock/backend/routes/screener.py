@@ -6,7 +6,7 @@ from services.enhanced_data_service import clean_data_service
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/screener")
+@router.get("/filter")
 async def get_screener_results(
     sector: Optional[str] = Query(None, description="Filter by sector"),
     market_cap_min: Optional[float] = Query(None, description="Minimum market cap in billions"),
@@ -16,7 +16,7 @@ async def get_screener_results(
     """
     Get stock screener results based on filters
     Only returns real data from Yahoo Finance
-    """
+"""
     try:
         logger.info(f"Running screener with filters: sector={sector}, market_cap_min={market_cap_min}, pe_max={pe_max}, roe_min={roe_min}")
         

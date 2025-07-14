@@ -19,18 +19,18 @@ const FundamentalAnalysis = ({ symbol }) => {
     }
   }, [symbol]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
+    const fetchData = async () => {
+        setLoading(true);
+        setError(null);
     try {
       const response = await fetchFundamentalData(symbol);
       setData(response);
-    } catch (err) {
+      } catch (err) {
       console.error('Error fetching fundamental data:', err);
       setError(err.message || 'Failed to fetch data');
-    } finally {
-      setLoading(false);
-    }
+      } finally {
+          setLoading(false);
+        }
   };
 
   if (loading) {
@@ -56,19 +56,19 @@ const FundamentalAnalysis = ({ symbol }) => {
         >
           🔄 Try Again
         </button>
-      </div>
-    );
-  }
+       </div>
+     );
+   }
 
   if (!data) {
-    return (
+     return (
       <div className="text-center p-12">
         <div className="text-gray-400 text-6xl mb-4">📊</div>
         <div className="text-gray-500 text-xl font-medium mb-2">Ready to Analyze</div>
         <div className="text-gray-400">Enter a stock symbol to view fundamental analysis</div>
-      </div>
-    );
-  }
+       </div>
+     );
+   }
 
   return (
     <div className="space-y-8">
@@ -107,7 +107,7 @@ const FundamentalAnalysis = ({ symbol }) => {
               </div>
               <div className="text-sm text-gray-600 font-medium">Change %</div>
             </div>
-          </div>
+       </div>
           <div className="mt-6 text-sm text-gray-500 text-center bg-white/50 rounded-lg p-3">
             📡 Source: {data.source} • ⏰ Last updated: {new Date(data.timestamp).toLocaleString()}
           </div>
@@ -127,10 +127,10 @@ const FundamentalAnalysis = ({ symbol }) => {
                 <div className="text-center">
                   <div className="text-lg font-bold text-gray-900 mb-2">{metric.value}</div>
                   <div className="text-sm text-gray-600 font-medium">{metric.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+           </div>
+                     </div>
+                   ))}
+                 </div>
         </div>
       )}
 
@@ -171,7 +171,7 @@ const FundamentalAnalysis = ({ symbol }) => {
               <div className="text-2xl mb-2">📈</div>
               <div className="text-sm text-gray-600 mb-2 font-medium">Growth Grade</div>
               <div className="text-xl font-bold text-purple-600">{data.investment_summary.growth_grade}</div>
-            </div>
+           </div>
             <div className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
               <div className="text-2xl mb-2">⭐</div>
               <div className="text-sm text-gray-600 mb-2 font-medium">Overall Rating</div>
@@ -179,7 +179,7 @@ const FundamentalAnalysis = ({ symbol }) => {
             </div>
           </div>
         </div>
-      )}
+       )}
     </div>
   );
 };
