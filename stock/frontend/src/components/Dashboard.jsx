@@ -5,7 +5,7 @@ import FundamentalSection from './fundamental/FundamentalSection';
 import SentimentAnalysis from './sentiment/SentimentAnalysis';
 import NewsView from './news/NewsView';
 import TechnicalAnalysis from './technical/TechnicalAnalysis';
-import Screener from './screener/Screener';
+// import Screener from './screener/Screener';
 import Settings from './settings/Settings';
 import { Heart, HeartOff, Sparkles } from 'lucide-react';
 import { fetchFundamentalData } from '../config/api';
@@ -197,8 +197,8 @@ const Dashboard = ({ selectedStock, showSettings, onCloseSettings, user, userPro
         return <NewsView symbol={stockSymbol} />;
       case 'technical':
         return <TechnicalAnalysis symbol={stockSymbol} />;
-      case 'screener':
-        return <Screener />;
+      // case 'screener':
+      //   return <Screener />;
       default:
         return <FundamentalSection stockSymbol={stockSymbol} onSymbolResolved={setResolvedSymbol} />;
     }

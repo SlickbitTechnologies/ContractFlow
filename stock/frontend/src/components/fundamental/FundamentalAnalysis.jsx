@@ -6,12 +6,13 @@ import NewsCatalysts from './NewsCatalysts';
 import RiskAssessment from './RiskAssessment';
 import ValuationRatios from './ValuationRatios';
 import MetricCard from '../MetricCard';
-import { TrendingUp, TrendingDown, DollarSign, BarChart3, Target, Shield, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, BarChart3, Target, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const FundamentalAnalysis = ({ symbol }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showAllMetrics, setShowAllMetrics] = useState(false);
 
   useEffect(() => {
     if (symbol) {
@@ -24,6 +25,9 @@ const FundamentalAnalysis = ({ symbol }) => {
         setError(null);
     try {
       const response = await fetchFundamentalData(symbol);
+      console.log('Fundamental API Response:', response);
+      console.log('Risk Assessment Data:', response?.risk_assessment);
+      console.log('Growth Performance Data:', response?.growth_performance);
       setData(response);
       } catch (err) {
       console.error('Error fetching fundamental data:', err);
@@ -122,15 +126,39 @@ const FundamentalAnalysis = ({ symbol }) => {
             <h2 className="text-2xl font-bold text-gray-800">Key Financial Metrics</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            {Object.entries(data.major_metrics).map(([key, metric]) => (
-              <div key={key} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900 mb-2">{metric.value}</div>
-                  <div className="text-sm text-gray-600 font-medium">{metric.label}</div>
-           </div>
-                     </div>
-                   ))}
-                 </div>
+            {Object.entries(data.major_metrics)
+              .slice(0, showAllMetrics ? undefined : 8)
+              .map(([key, metric]) => (
+                <div key={key} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-900 mb-2">{metric.value}</div>
+                    <div className="text-sm text-gray-600 font-medium">{metric.label}</div>
+                  </div>
+                </div>
+              ))}
+          </div>
+          
+          {/* Show More/Less Button */}
+          {Object.keys(data.major_metrics).length > 8 && (
+            <div className="text-center mt-6">
+              <button
+                onClick={() => setShowAllMetrics(!showAllMetrics)}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                {showAllMetrics ? (
+                  <>
+                    <ChevronUp className="mr-2" size={20} />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="mr-2" size={20} />
+                    Show More Metrics
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
