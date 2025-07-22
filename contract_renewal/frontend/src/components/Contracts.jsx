@@ -23,7 +23,7 @@ const Contracts = ({ contracts, onDataChange }) => {
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-      await fetch('http://localhost:8000/upload_contract/', {
+      await fetch('https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/upload_contract/', {
         method: 'POST',
         body: formData,
       });
@@ -94,7 +94,7 @@ const Contracts = ({ contracts, onDataChange }) => {
       return;
     }
     try {
-      await fetch(`http://localhost:8000/contracts/${contractToDelete.firebase_doc_id}`, {
+      await fetch(`https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/${contractToDelete.firebase_doc_id}`, {
         method: 'DELETE',
       });
       onDataChange(); // Refresh contracts list

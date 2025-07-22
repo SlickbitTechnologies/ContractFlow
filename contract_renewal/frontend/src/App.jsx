@@ -15,7 +15,7 @@ const App = () => {
 
   const fetchContracts = async () => {
     if (user) {
-      const res = await fetch('http://localhost:8000/contracts/');
+      const res = await fetch('https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/');
       const data = await res.json();
       setContracts(data);
     }
