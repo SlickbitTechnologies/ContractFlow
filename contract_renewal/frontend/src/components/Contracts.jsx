@@ -28,7 +28,7 @@ const Contracts = ({ contracts, onDataChange }) => {
       const formData = new FormData();
       formData.append('file', file);
       // https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io
-      await fetch('http://localhost:8000/upload_contract/', {
+      await fetch('https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/upload_contract/', {
         method: 'POST',
         body: formData,
       });
@@ -109,7 +109,7 @@ const Contracts = ({ contracts, onDataChange }) => {
       return;
     }
     try {
-      await fetch(`http://localhost:8000/contracts/${contractToDelete.firebase_doc_id}`, {
+      await fetch(`https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/${contractToDelete.firebase_doc_id}`, {
         method: 'DELETE',
       });
       onDataChange(); // Refresh contracts list
@@ -211,7 +211,7 @@ const Contracts = ({ contracts, onDataChange }) => {
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded"
                 onClick={async () => {
-                  await fetch(`http://localhost:8000/contracts/${editContract.firebase_doc_id}`, {
+                  await fetch(`https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/${editContract.firebase_doc_id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(editContract),
