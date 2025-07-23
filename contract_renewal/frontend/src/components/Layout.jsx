@@ -75,7 +75,7 @@ const Layout = ({ children, activeTab, onTabChange, user, contracts }) => {
             <div className="flex items-center space-x-8">
               {/* <div className="flex items-center space-x-2"> */}
                 <img
-                  src="assets/images/slickbitLogo.png"                  alt="slickbit Logo"
+                  src="../../assets/images/slickbitLogo.png"                  alt="slickbit Logo"
                   className="w-35 h-10 rounded-lg object-contain bg-white border border-gray-200"
                 />
                 {/* <h1 className="text-xl font-semibold text-gray-900">ContractFlow</h1> */}
