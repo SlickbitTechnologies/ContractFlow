@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Bell, Settings, User } from 'lucide-react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
+import slickbitLogo from '../../assets/images/slickbitLogo.png';
 
 const Layout = ({ children, activeTab, onTabChange, user, contracts }) => {
   const tabs = [
@@ -75,7 +76,8 @@ const Layout = ({ children, activeTab, onTabChange, user, contracts }) => {
             <div className="flex items-center space-x-8">
               {/* <div className="flex items-center space-x-2"> */}
                 <img
-                  src="../../assets/images/slickbitLogo.png"                  alt="slickbit Logo"
+                  src={slickbitLogo}                 
+                  alt="slickbit Logo"
                   className="w-35 h-10 rounded-lg object-contain bg-white border border-gray-200"
                 />
                 {/* <h1 className="text-xl font-semibold text-gray-900">ContractFlow</h1> */}
