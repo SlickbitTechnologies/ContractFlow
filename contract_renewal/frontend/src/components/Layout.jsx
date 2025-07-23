@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Bell, Settings, User } from 'lucide-react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -32,6 +32,38 @@ const Layout = ({ children, activeTab, onTabChange, user, contracts }) => {
   };
 
   const notificationCount = getNotificationCount();
+  const [showNotifications, setShowNotifications] = React.useState(false);
+  const notificationRef = useRef();
+
+  // Get contracts expiring in next 30 days
+  const getExpiringContracts = () => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const in30Days = new Date(now);
+    in30Days.setDate(in30Days.getDate() + 30);
+    return contracts.filter((c) => {
+      if (!c.ends || c.ends === 'TBD') return false;
+      const endDate = new Date(c.ends);
+      return endDate >= now && endDate <= in30Days;
+    });
+  };
+
+  // Close popup on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,12 +73,13 @@ const Layout = ({ children, activeTab, onTabChange, user, contracts }) => {
           <div className="flex items-center justify-between h-16">
             {/* Logo and Navigation */}
             <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">📋</span>
-                </div>
-                <h1 className="text-xl font-semibold text-gray-900">ContractFlow</h1>
-              </div>
+              {/* <div className="flex items-center space-x-2"> */}
+                <img
+                  src="assets/images/slickbitLogo.png"                  alt="slickbit Logo"
+                  className="w-35 h-10 rounded-lg object-contain bg-white border border-gray-200"
+                />
+                {/* <h1 className="text-xl font-semibold text-gray-900">ContractFlow</h1> */}
+              {/* </div> */}
               
               <nav className="flex space-x-1">
                 {tabs.map((tab) => (
@@ -67,15 +100,38 @@ const Layout = ({ children, activeTab, onTabChange, user, contracts }) => {
             </div>
 
             {/* Right side actions */}
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-400 hover:text-gray-500">
-                <Bell className="w-5 h-5" />
-                {notificationCount > 0 && (
-                  <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                    {notificationCount}
-                  </span>
+            <div className="flex items-center space-x-4 relative">
+              <div className="relative" ref={notificationRef}>
+                <button
+                  className="relative p-2 text-gray-400 hover:text-gray-500"
+                  onClick={() => setShowNotifications((prev) => !prev)}
+                >
+                  <Bell className="w-5 h-5" />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                      {notificationCount}
+                    </span>
+                  )}
+                </button>
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div className="p-4 border-b font-semibold text-gray-900">Expiring in 30 Days</div>
+                    <ul className="max-h-64 overflow-y-auto">
+                      {getExpiringContracts().length === 0 ? (
+                        <li className="p-4 text-gray-500">No contracts expiring soon.</li>
+                      ) : (
+                        getExpiringContracts().map((c, idx) => (
+                          <li key={idx} className="p-4 border-b last:border-b-0">
+                            <div className="font-medium">{c.company}</div>
+                            <div className="text-sm text-gray-500">{c.service}</div>
+                            <div className="text-xs text-gray-400">Ends: {c.ends}</div>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
                 )}
-              </button>
+              </div>
               <div className="relative">
                 <button onClick={handleLogout}>
                   <img 

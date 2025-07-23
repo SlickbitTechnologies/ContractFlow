@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Filter, Eye, Edit, Download } from 'lucide-react';
+import { Filter, Eye, Edit, Download, X } from 'lucide-react';
 
 const Contracts = ({ contracts, onDataChange }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -7,6 +7,10 @@ const Contracts = ({ contracts, onDataChange }) => {
   const [actionFilter, setActionFilter] = useState('All Actions');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editContract, setEditContract] = useState(null);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [selectedPdfUrl, setSelectedPdfUrl] = useState(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -23,7 +27,8 @@ const Contracts = ({ contracts, onDataChange }) => {
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-      await fetch('https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/upload_contract/', {
+      // https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io
+      await fetch('http://localhost:8000/upload_contract/', {
         method: 'POST',
         body: formData,
       });
@@ -41,6 +46,16 @@ const Contracts = ({ contracts, onDataChange }) => {
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files || []);
     handleFiles(files);
+  };
+
+  const handleEditClick = (contract) => {
+    setEditContract({ ...contract });
+    setIsEditModalOpen(true);
+  };
+
+  const handleViewPdf = (contract) => {
+    setSelectedPdfUrl(contract.pdf_url);
+    setPdfModalOpen(true);
   };
 
   // Filtering logic
@@ -94,7 +109,7 @@ const Contracts = ({ contracts, onDataChange }) => {
       return;
     }
     try {
-      await fetch(`https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/${contractToDelete.firebase_doc_id}`, {
+      await fetch(`http://localhost:8000/contracts/${contractToDelete.firebase_doc_id}`, {
         method: 'DELETE',
       });
       onDataChange(); // Refresh contracts list
@@ -103,22 +118,147 @@ const Contracts = ({ contracts, onDataChange }) => {
     }
   };
 
+  // Add effect to close PDF modal on Escape or outside click
+  React.useEffect(() => {
+    if (!pdfModalOpen) return;
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') setPdfModalOpen(false);
+    }
+    function handleClickOutside(e) {
+      if (e.target.classList.contains('pdf-modal-overlay')) setPdfModalOpen(false);
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [pdfModalOpen]);
+
   return (
     <div className="space-y-6">
+      {/* Edit Modal */}
+      {isEditModalOpen && editContract && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h3 className="text-lg font-bold mb-4">Edit Contract</h3>
+            <div className="space-y-3">
+              <input
+                className="w-full border p-2 rounded"
+                value={editContract.company}
+                onChange={e => setEditContract({ ...editContract, company: e.target.value })}
+                placeholder="Company"
+              />
+              <input
+                className="w-full border p-2 rounded"
+                value={editContract.service}
+                onChange={e => setEditContract({ ...editContract, service: e.target.value })}
+                placeholder="Service"
+              />
+              <select
+                className="w-full border p-2 rounded"
+                value={editContract.status}
+                onChange={e => setEditContract({ ...editContract, status: e.target.value })}
+              >
+                <option value="Active">Active</option>
+                <option value="Expired">Expired</option>
+                <option value="Pending">Pending</option>
+              </select>
+              <select
+                className="w-full border p-2 rounded"
+                value={editContract.action}
+                onChange={e => setEditContract({ ...editContract, action: e.target.value })}
+              >
+                <option value="Renew">Renew</option>
+                <option value="Cancel">Cancel</option>
+                <option value="Review">Review</option>
+              </select>
+              <input
+                className="w-full border p-2 rounded"
+                value={editContract.category}
+                onChange={e => setEditContract({ ...editContract, category: e.target.value })}
+                placeholder="Category"
+              />
+              <input
+                className="w-full border p-2 rounded"
+                value={editContract.ends}
+                onChange={e => setEditContract({ ...editContract, ends: e.target.value })}
+                placeholder="Ends"
+              />
+              <input
+                className="w-full border p-2 rounded"
+                value={editContract.value}
+                onChange={e => setEditContract({ ...editContract, value: e.target.value })}
+                placeholder="Value"
+              />
+              <select
+                className="w-full border p-2 rounded"
+                value={editContract.priority}
+                onChange={e => setEditContract({ ...editContract, priority: e.target.value })}
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded"
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={async () => {
+                  await fetch(`http://localhost:8000/contracts/${editContract.firebase_doc_id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editContract),
+                  });
+                  setIsEditModalOpen(false);
+                  onDataChange();
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {pdfModalOpen && selectedPdfUrl && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 pdf-modal-overlay">
+          <div className="bg-white rounded-lg shadow-lg p-4 max-w-3xl w-full relative">
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all"
+              style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label="Close PDF"
+              onClick={() => setPdfModalOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <iframe
+              src={selectedPdfUrl}
+              title="Contract PDF"
+              className="w-full h-[80vh] rounded"
+            />
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Contract Management</h2>
           <p className="text-gray-600">Search, filter, and manage all contracts</p>
         </div>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center space-x-2">
+        {/* <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center space-x-2">
           <Download className="w-4 h-4" />
           <span>Export CSV</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Upload Area */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-lg hover:-translate-y-1 transition-all">
         <div className="flex items-center space-x-2 mb-4">
           <span role="img" aria-label="upload" className="w-5 h-5 text-gray-400">⬆️</span>
           <h3 className="font-medium text-gray-900">Upload Contract Documents</h3>
@@ -171,7 +311,7 @@ const Contracts = ({ contracts, onDataChange }) => {
       </div>
 
       {/* Search and Filter */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all">
         <div className="flex items-center space-x-2 mb-4">
           <Filter className="w-5 h-5 text-gray-400" />
           <h3 className="font-medium text-gray-900">Search & Filter</h3>
@@ -215,7 +355,7 @@ const Contracts = ({ contracts, onDataChange }) => {
       </div>
 
       {/* Contracts Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all">
         <div className="overflow-x-auto">
           <table className="w-full">
             <tbody className="divide-y divide-gray-200">
@@ -258,10 +398,16 @@ const Contracts = ({ contracts, onDataChange }) => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">
-                      <button className="text-gray-400 hover:text-gray-600 p-1">
+                      <button
+                        className="text-gray-400 hover:text-gray-600 p-1"
+                        onClick={() => handleViewPdf(contract)}
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="text-gray-400 hover:text-gray-600 p-1">
+                      <button
+                        className="text-gray-400 hover:text-gray-600 p-1"
+                        onClick={() => handleEditClick(contract)}
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button

@@ -14,8 +14,9 @@ const App = () => {
   const [contracts, setContracts] = useState([]);
 
   const fetchContracts = async () => {
+    // https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io
     if (user) {
-      const res = await fetch('https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/');
+      const res = await fetch('http://localhost:8000/contracts/');
       const data = await res.json();
       setContracts(data);
     }

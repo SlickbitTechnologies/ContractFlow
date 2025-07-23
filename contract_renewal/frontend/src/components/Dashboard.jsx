@@ -99,10 +99,7 @@ const Dashboard = ({ contracts }) => {
     now.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
 
     const buckets = [30, 60, 90];
-    return buckets.map((days, idx) => {
-      const startDays = idx === 0 ? 0 : buckets[idx - 1];
-      const endDays = days;
-
+    return buckets.map((days) => {
       const contractsInBucket = contracts.filter((c) => {
         if (!c.ends || c.ends === 'TBD') return false;
         const endDate = new Date(c.ends);
@@ -110,9 +107,8 @@ const Dashboard = ({ contracts }) => {
 
         // Calculate full day difference from start of today
         const diffDays = Math.floor((endDate - now) / (1000 * 60 * 60 * 24));
-        
-        // Buckets: [0-29], [30-59], [60-89]
-        return diffDays >= startDays && diffDays < endDays;
+        // Cumulative buckets: 0-29, 0-59, 0-89
+        return diffDays >= 0 && diffDays < days;
       });
       const totalValue = contractsInBucket.reduce((sum, c) => {
         if (typeof c.value === 'string' && c.value.startsWith('$')) {
@@ -122,7 +118,7 @@ const Dashboard = ({ contracts }) => {
         return sum;
       }, 0);
       return {
-        name: `Next ${endDays} Days`,
+        name: `Next ${days} Days`,
         value: contractsInBucket.length,
         totalValue: `$${totalValue.toLocaleString()}`,
       };
@@ -156,12 +152,6 @@ const Dashboard = ({ contracts }) => {
       color: 'text-blue-600',
     },
     {
-      title: 'Expiring Soon',
-      value: getExpiringSoonCount(),
-      icon: <AlertTriangle className="w-5 h-5" />, 
-      color: 'text-yellow-600',
-    },
-    {
       title: 'Renewed This Month',
       value: getRenewedThisMonth(),
       icon: <RotateCcw className="w-5 h-5" />, 
@@ -180,7 +170,7 @@ const Dashboard = ({ contracts }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Contract Dashboard</h2>
+          <h2 className="text-2xl font-bold text-gray-900">ContractFlow </h2>
           <p className="text-gray-600">Monitor and manage your contract portfolio</p>
         </div>
         <button 
@@ -193,9 +183,9 @@ const Dashboard = ({ contracts }) => {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
         {metrics.map((metric, index) => (
-          <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between h-full hover:shadow-lg hover:-translate-y-1 transition-all">
             <div className="flex items-center justify-between">
               <div className={`p-2 rounded-lg bg-gray-50 ${metric.color}`}>
                 {metric.icon}
@@ -210,7 +200,7 @@ const Dashboard = ({ contracts }) => {
       </div>
 
       {/* Renewal Pipeline */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">📈 Renewal Pipeline</h3>
           <span className="text-sm text-gray-500">{getTotalContractsCount()} contracts</span>
@@ -244,7 +234,7 @@ const Dashboard = ({ contracts }) => {
       </div>
 
       {/* Upcoming Expirations */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">🔔 Top 3 Upcoming Expirations</h3>
         <ul className="divide-y divide-gray-200">
           {upcomingExpirations.length === 0 && (

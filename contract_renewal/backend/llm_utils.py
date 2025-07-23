@@ -86,8 +86,12 @@ def call_gemini_llm_with_pdf(pdf_bytes):
     print("Gemini SDK response:", response.text)
     try:
         contract_data = json.loads(response.text)
-        validated_contract = Contract(**contract_data)
-        return validated_contract.dict()
+        if isinstance(contract_data, list):
+            validated_contracts = [Contract(**item).dict() for item in contract_data]
+            return validated_contracts
+        else:
+            validated_contract = Contract(**contract_data)
+            return validated_contract.dict()
     except (ValidationError, json.JSONDecodeError) as e:
         print(f"Error parsing or validating Gemini response: {e}\nRaw response: {response.text}")
         raise HTTPException(status_code=500, detail=f"Data validation failed: {e}") 
