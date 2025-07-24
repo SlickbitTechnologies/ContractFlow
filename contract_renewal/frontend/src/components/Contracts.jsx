@@ -11,6 +11,8 @@ const Contracts = ({ contracts, onDataChange }) => {
   const [editContract, setEditContract] = useState(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [selectedPdfUrl, setSelectedPdfUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -23,6 +25,8 @@ const Contracts = ({ contracts, onDataChange }) => {
   };
 
   const handleFiles = async (files) => {
+    setLoadingMessage('Uploading and processing...');
+    setLoading(true);
     setUploadedFiles(files.map(file => file.name));
     for (const file of files) {
       const formData = new FormData();
@@ -33,7 +37,9 @@ const Contracts = ({ contracts, onDataChange }) => {
         body: formData,
       });
     }
-    onDataChange(); // Refresh contracts list
+    await onDataChange(); // Refresh contracts list
+    setLoading(false);
+    setLoadingMessage('');
   };
 
   const handleDrop = (e) => {
@@ -109,11 +115,17 @@ const Contracts = ({ contracts, onDataChange }) => {
       return;
     }
     try {
+      setLoadingMessage('Please wait, deleting the PDF...');
+      setLoading(true);
       await fetch(`https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/${contractToDelete.firebase_doc_id}`, {
         method: 'DELETE',
       });
-      onDataChange(); // Refresh contracts list
+      await onDataChange(); // Refresh contracts list
+      setLoading(false);
+      setLoadingMessage('');
     } catch (error) {
+      setLoading(false);
+      setLoadingMessage('');
       alert('Failed to delete contract.');
     }
   };
@@ -136,7 +148,18 @@ const Contracts = ({ contracts, onDataChange }) => {
   }, [pdfModalOpen]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="flex flex-col items-center">
+            <svg className="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <span className="text-lg text-white font-semibold">{loadingMessage}</span>
+          </div>
+        </div>
+      )}
       {/* Edit Modal */}
       {isEditModalOpen && editContract && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
@@ -268,10 +291,10 @@ const Contracts = ({ contracts, onDataChange }) => {
             isDragging 
               ? 'border-blue-500 bg-blue-50' 
               : 'border-gray-300 hover:border-gray-400'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          } ${loading ? 'pointer-events-none opacity-60' : ''}`}
+          onDragOver={loading ? undefined : handleDragOver}
+          onDragLeave={loading ? undefined : handleDragLeave}
+          onDrop={loading ? undefined : handleDrop}
         >
           <span role="img" aria-label="file" className="w-12 h-12 text-gray-400 mx-auto mb-4">📄</span>
           <h4 className="text-lg font-medium text-gray-900 mb-2">
@@ -281,15 +304,16 @@ const Contracts = ({ contracts, onDataChange }) => {
             Drag and drop files here, or click to browse
           </p>
           <p className="text-sm text-gray-400 mb-6">
-            Supports PDF, DOC, DOCX files up to 10MB
+            Supports PDF up to 10MB
           </p>
           <label className="inline-block">
             <input
               type="file"
               multiple
-              accept=".pdf,.doc,.docx"
-              onChange={handleFileSelect}
+              accept=".pdf,.doc,.docx,.word"
+              onChange={loading ? undefined : handleFileSelect}
               className="hidden"
+              disabled={loading}
             />
             <span className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors cursor-pointer">
               Choose Files
