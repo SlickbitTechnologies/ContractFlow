@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, AlertTriangle, RotateCcw, DollarSign, Download } from 'lucide-react';
+import { TrendingUp, AlertTriangle, RotateCcw, DollarSign, Download, Zap, Calendar, FileText } from 'lucide-react';
 
 // Helper to download data as a CSV file
 const downloadCSV = (data, filename = 'export.csv') => {
@@ -148,19 +148,19 @@ const Dashboard = ({ contracts }) => {
     {
       title: 'Total Contracts',
       value: getTotalContractsCount(),
-      icon: <TrendingUp className="w-5 h-5" />, 
+      icon: <TrendingUp className="w-5 h-5 text-blue-600 bg-blue-100 rounded-full p-1" />, 
       color: 'text-blue-600',
     },
     {
       title: 'Renewed This Month',
       value: getRenewedThisMonth(),
-      icon: <RotateCcw className="w-5 h-5" />, 
+      icon: <RotateCcw className="w-5 h-5 text-green-600 bg-green-100 rounded-full p-1" />, 
       color: 'text-green-600',
     },
     {
       title: 'Contract Value',
       value: getTotalContractValue(),
-      icon: <DollarSign className="w-5 h-5" />, 
+      icon: <DollarSign className="w-5 h-5 text-purple-600 bg-purple-100 rounded-full p-1" />, 
       color: 'text-purple-600',
     },
   ];

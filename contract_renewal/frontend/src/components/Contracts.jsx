@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Filter, Eye, Edit, Download, X } from 'lucide-react';
+import { Filter, Eye, Edit, Download, X, Folder, Calendar, DollarSign, Zap, CheckCircle, Upload, FileText } from 'lucide-react';
 
 const Contracts = ({ contracts, onDataChange }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,8 +31,8 @@ const Contracts = ({ contracts, onDataChange }) => {
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-      // https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io
-      await fetch('https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/upload_contract/', {
+      // https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io
+      await fetch('https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/upload_contract/', {
         method: 'POST',
         body: formData,
       });
@@ -117,7 +117,7 @@ const Contracts = ({ contracts, onDataChange }) => {
     try {
       setLoadingMessage('Please wait, deleting the PDF...');
       setLoading(true);
-      await fetch(`https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/${contractToDelete.firebase_doc_id}`, {
+      await fetch(`https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/contracts/${contractToDelete.firebase_doc_id}`, {
         method: 'DELETE',
       });
       await onDataChange(); // Refresh contracts list
@@ -234,7 +234,7 @@ const Contracts = ({ contracts, onDataChange }) => {
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded"
                 onClick={async () => {
-                  await fetch(`https://contractsrenewalapplication.nicefield-a95bbc97.southcentralus.azurecontainerapps.io/contracts/${editContract.firebase_doc_id}`, {
+                  await fetch(`https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/contracts/${editContract.firebase_doc_id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(editContract),
@@ -283,7 +283,7 @@ const Contracts = ({ contracts, onDataChange }) => {
       {/* Upload Area */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-lg hover:-translate-y-1 transition-all">
         <div className="flex items-center space-x-2 mb-4">
-          <span role="img" aria-label="upload" className="w-5 h-5 text-gray-400">⬆️</span>
+          <Upload className="w-5 h-5 text-blue-500 bg-blue-100 rounded-full p-1" />
           <h3 className="font-medium text-gray-900">Upload Contract Documents</h3>
         </div>
         <div
@@ -296,7 +296,7 @@ const Contracts = ({ contracts, onDataChange }) => {
           onDragLeave={loading ? undefined : handleDragLeave}
           onDrop={loading ? undefined : handleDrop}
         >
-          <span role="img" aria-label="file" className="w-12 h-12 text-gray-400 mx-auto mb-4">📄</span>
+          <FileText className="w-12 h-12 text-indigo-400 mx-auto mb-4 bg-indigo-100 rounded-full p-2" />
           <h4 className="text-lg font-medium text-gray-900 mb-2">
             Upload your contract documents
           </h4>
@@ -326,7 +326,7 @@ const Contracts = ({ contracts, onDataChange }) => {
             <h4 className="font-medium text-gray-900">Uploaded Files:</h4>
             {uploadedFiles.map((fileName, index) => (
               <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
-                <span role="img" aria-label="check" className="text-green-500">✔️</span>
+                <CheckCircle className="w-4 h-4 text-green-500 mr-1 inline bg-green-100 rounded-full p-1" />
                 <span>{fileName}</span>
               </div>
             ))}
@@ -399,19 +399,19 @@ const Contracts = ({ contracts, onDataChange }) => {
                       <p className="text-sm text-gray-500">{contract.service}</p>
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <div className="flex items-center space-x-1">
-                          <span>📁</span>
+                          <Folder className="w-4 h-4 mr-1 inline text-blue-500 bg-blue-100 rounded-full p-1" />
                           <span>Category: {contract.category}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <span>📅</span>
+                          <Calendar className="w-4 h-4 mr-1 inline text-purple-500 bg-purple-100 rounded-full p-1" />
                           <span>Ends: {contract.ends}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <span>💰</span>
+                          <DollarSign className="w-4 h-4 mr-1 inline text-green-600 bg-green-100 rounded-full p-1" />
                           <span>Value: {contract.value}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <span>⚡</span>
+                          <Zap className="w-4 h-4 mr-1 inline text-yellow-500 bg-yellow-100 rounded-full p-1" />
                           <span>Action: </span>
                           <span className={getActionBadge(contract.action)}>
                             {contract.action}
