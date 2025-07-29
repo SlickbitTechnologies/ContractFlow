@@ -37,7 +37,7 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def call_gemini_llm(text):
     prompt = f"""
-Extract the following contract details from the text below and return as JSON with keys: company, status, priority, service, category, ends, value, action. If a field is missing, use 'TBD'.
+Extract the following contract details from the text below and return as JSON with keys: company, status, priority, service, category, ends, value, action. For the 'action' field, only use one of: Renew, Cancel, or Review. If a field is missing, use 'TBD'.
 
 Text:
 {text}
@@ -45,7 +45,7 @@ Text:
     headers = {"Content-Type": "application/json"}
     params = {"key": GEMINI_API_KEY}
     data = {
-        "contents": [{"parts": [{"text": prompt}]}],
+        "contents": [ { "parts": [ { "text": prompt } ] } ],
         "generationConfig": {"responseMimeType": "application/json"}
     }
     response = requests.post(GEMINI_API_URL, headers=headers, params=params, json=data)
@@ -74,6 +74,7 @@ def call_gemini_llm_with_pdf(pdf_bytes):
     prompt = (
         "Extract the following contract details from the text below and return as JSON with keys: "
         "company, status, priority, service, category, ends, value, action. "
+        "For the 'action' field, only use one of: Renew, Cancel, or Review. "
         "If a field is missing, use 'TBD'.\n\nText:\n" + text
     )
     model = genai.GenerativeModel("models/gemini-2.0-flash")

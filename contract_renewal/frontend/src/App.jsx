@@ -46,7 +46,7 @@ const App = () => {
       // case 'upload':
       //   return <Upload />;
       case 'settings':
-        return <Settings />;
+        return <Settings setActiveTab={setActiveTab} onDataChange={fetchContracts} />;
       default:
         return <Dashboard contracts={contracts} />;
     }
