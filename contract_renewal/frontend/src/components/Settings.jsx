@@ -1,198 +1,317 @@
-import React, { useState } from 'react';
-import { Settings as SettingsIcon, Link, Bell, User, Download, HelpCircle, Share2, AlertCircle, FileText } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Bell, 
+  Share2, 
+  CheckCircle, 
+  AlertCircle, 
+  Upload,
+  FileText,
+  ArrowRight
+} from 'lucide-react';
 
-const Settings = () => {
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [slackNotifications, setSlackNotifications] = useState(false);
-  const [renewalReminders, setRenewalReminders] = useState(true);
-  const [weeklyReports, setWeeklyReports] = useState(true);
+const Settings = ({ setActiveTab, onDataChange }) => {
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
+
+  // SharePoint integration state
+  const [sharepointStatus, setSharepointStatus] = useState('disconnected');
+  const [sharepointSites, setSharepointSites] = useState([]);
+  const [sharepointFiles, setSharepointFiles] = useState([]);
+  const [sharepointLoading, setSharepointLoading] = useState(false);
+  const [sharepointError, setSharepointError] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(null);
 
   const integrations = [
     {
       name: 'Microsoft SharePoint',
-      description: 'Sync contracts with SharePoint document library',
-      status: 'Not Connected',
-      statusColor: 'bg-red-100 text-red-700',
-      icon: '🔵',
+      description: 'Connected to Microsoft SharePoint',
+
     },
-   
   ];
 
-  const ToggleSwitch = ({ checked, onChange }) => (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? 'bg-blue-500' : 'bg-gray-200'
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  );
+  // Test SharePoint connection
+  const testSharePointConnection = async () => {
+    setSharepointLoading(true);
+    setSharepointError('');
+    try {
+      const response = await fetch('https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/sharepoint/status');
+      const data = await response.json();
+      setSharepointStatus(data.status);
+      if (data.status === 'connected') {
+        await fetchSharePointSites();
+        await fetchSharePointFiles();
+      } else {
+        setSharepointError(data.message);
+      }
+    } catch (error) {
+      setSharepointStatus('error');
+      setSharepointError('Failed to connect to SharePoint');
+    }
+    setSharepointLoading(false);
+  };
+
+  // Fetch SharePoint sites
+  const fetchSharePointSites = async () => {
+    try {
+      const response = await fetch('https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/sharepoint/sites');
+      const data = await response.json();
+      if (data.value) {
+        setSharepointSites(data.value);
+      }
+    } catch (error) {
+      setSharepointError('Failed to fetch SharePoint sites');
+    }
+  };
+
+  // Fetch SharePoint files from specific site
+  const fetchSharePointFiles = async () => {
+    try {
+      const response = await fetch('https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/sharepoint/specific-site/files');
+      const data = await response.json();
+      if (data.value) {
+        setSharepointFiles(data.value);
+      }
+    } catch (error) {
+      setSharepointError('Failed to fetch SharePoint files');
+    }
+  };
+
+  // Upload document to contracts
+  const uploadDocumentToContracts = async (file) => {
+    setUploadingFile(file.name);
+    try {
+      // First, download the file from SharePoint
+      const downloadResponse = await fetch(`https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/sharepoint/download/${file.id}`);
+      const fileBlob = await downloadResponse.blob();
+      
+      // Create a File object from the blob
+      const fileObject = new File([fileBlob], file.name, { type: file.file?.mimeType || 'application/pdf' });
+      
+      // Upload to contracts page
+      const formData = new FormData();
+      formData.append('file', fileObject);
+      
+      const uploadResponse = await fetch('https://contract.orangebeach-467a73d4.southindia.azurecontainerapps.io/upload_contract/', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (uploadResponse.ok) {
+        const result = await uploadResponse.json();
+        alert(`Successfully uploaded ${file.name} to contracts!`);
+        // Switch to contracts tab and refresh contracts list
+        if (typeof setActiveTab === 'function') setActiveTab('contracts');
+        if (typeof onDataChange === 'function') onDataChange();
+      } else {
+        throw new Error('Failed to upload to contracts');
+      }
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      alert(`Failed to upload ${file.name}: ${error.message}`);
+    } finally {
+      setUploadingFile(null);
+    }
+  };
+
+  // Connect to SharePoint
+  const connectToSharePoint = async () => {
+    await testSharePointConnection();
+  };
+
+  // Get expiring contracts for notifications
+  const getExpiringContracts = () => {
+    const contracts = JSON.parse(localStorage.getItem('contracts') || '[]');
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    
+    return contracts.filter(contract => {
+      const endDate = new Date(contract.ends);
+      return endDate <= thirtyDaysFromNow && endDate >= new Date();
+    });
+  };
+
+  useEffect(() => {
+    const expiringContracts = getExpiringContracts();
+    setNotifications(expiringContracts);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-        <p className="text-gray-600">Configure your contract management preferences and integrations</p>
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+        <p className="text-gray-600">Manage your application preferences and integrations</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Third-Party Integrations */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all">
-          <div className="flex items-center space-x-2 mb-6">
-            <Link className="w-5 h-5 text-gray-400" />
-            <h3 className="font-medium text-gray-900">Third-Party Integrations</h3>
+      {/* Notifications Section */}
+      {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 hover:shadow-lg hover:-translate-y-1 transition-all">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-100 rounded-full p-2">
+              <Bell className="w-5 h-5 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
           </div>
-          
-          <div className="space-y-4">
-            {integrations.map((integration, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Share2 className="w-5 h-5 mr-2 inline text-blue-500 bg-blue-100 rounded-full p-1" />
-                  <div>
-                    <h4 className="font-medium text-gray-900">{integration.name}</h4>
-                    <p className="text-sm text-gray-500">{integration.description}</p>
-                  </div>
+          <div className="relative" ref={notificationRef}>
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+            
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-900">Contracts Expiring Soon</h3>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <span className={`px-2 py-1 text-xs font-medium rounded ${integration.statusColor}`}>
-                    {integration.status}
-                  </span>
-                  <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
-                    {integration.status === 'Connected' ? 'Configure' : 'Connect'}
-                  </button>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.length > 0 ? (
+                    notifications.map((contract, index) => (
+                      <div key={index} className="p-4 border-b border-gray-100 last:border-b-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-gray-900">{contract.company}</p>
+                            <p className="text-sm text-gray-600">{contract.service}</p>
+                            <p className="text-sm text-red-600">Expires: {contract.ends}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-gray-500 text-center">
+                      No contracts expiring in the next 30 days
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
-
-        {/* Account Settings */}
-        {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center space-x-2 mb-6">
-            <User className="w-5 h-5 text-gray-400" />
-            <h3 className="font-medium text-gray-900">Account Settings</h3>
-          </div>
+          </div> */}
           
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Organization
-              </label>
-              <input
-                type="text"
-                value="Acme Corporation"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                readOnly
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Timezone
-              </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option>UTC-5 (EST)</option>
-                <option>UTC-8 (PST)</option>
-                <option>UTC+0 (GMT)</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Default Currency
-              </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option>USD ($)</option>
-                <option>EUR (€)</option>
-                <option>GBP (£)</option>
-              </select>
-            </div>
+      {/* Integrations Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:-translate-y-1 transition-all">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="bg-purple-100 rounded-full p-2">
+            <Share2 className="w-5 h-5 text-purple-600" />
           </div>
-        </div>*/}
-      </div> 
-
-      {/* Notification Preferences */}
-      {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center space-x-2 mb-6">
-          <Bell className="w-5 h-5 text-yellow-500 bg-yellow-100 rounded-full p-1" />
-          <h3 className="font-medium text-gray-900">Notification Preferences</h3>
+          <h2 className="text-xl font-semibold text-gray-900">Integrations</h2>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {integrations.map((integration, index) => (
+            <div key={index} className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-blue-100 rounded-full p-2">
+                    <Share2 className="w-5 h-5 text-blue-600" />
+                  </div>
             <div>
-              <h4 className="font-medium text-gray-900">Email Alerts</h4>
-              <p className="text-sm text-gray-500">Receive email notifications for contract events</p>
+                    <h3 className="font-medium text-gray-900">{integration.name}</h3>
+                    <p className="text-sm text-green-600">{integration.description}</p>
+                  </div>
             </div>
-            <ToggleSwitch checked={emailAlerts} onChange={setEmailAlerts} />
+                <button
+                  onClick={connectToSharePoint}
+                  disabled={sharepointLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {sharepointLoading ? 'Fetching...' : 'Fetch Files'}
+                </button>
           </div>
           
-          <div className="flex items-center justify-between">
+              {/* SharePoint Status and Files */}
+              {sharepointStatus === 'connected' && (
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="font-medium text-green-800">SharePoint Connected</span>
+                  </div>
+                  {sharepointSites.length > 0 && (
+                    <div className="mb-4">
+                      {/* <h5 className="font-medium text-green-800 mb-2">Available Sites:</h5> */}
+                      <ul className="space-y-1">
+                        {/* {sharepointSites.map((site, index) => (
+                          <li key={index} className="text-sm text-green-700">
+                            • {site.name} ({site.webUrl})
+                          </li>
+                        ))} */}
+                      </ul>
+                    </div>
+                  )}
+                  {sharepointFiles.length > 0 && (
+                    <div>
+                      <h5 className="font-medium text-green-800 mb-3">Documents in SharePoint:</h5>
+                      <div className="space-y-2">
+                        {sharepointFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-white border border-green-200 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-green-100 rounded-full p-1">
+                                <FileText className="w-4 h-4 text-green-600" />
+                              </div>
             <div>
-              <h4 className="font-medium text-gray-900">Slack Notifications</h4>
-              <p className="text-sm text-gray-500">Send alerts to configured Slack channels</p>
+                                <p className="font-medium text-green-800">{file.name}</p>
+                                <p className="text-sm text-green-600">
+                                  {file.size ? `${Math.round(file.size / 1024)} KB` : 'Unknown size'}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => uploadDocumentToContracts(file)}
+                              disabled={uploadingFile === file.name}
+                              className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {uploadingFile === file.name ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span>Uploading...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-4 h-4" />
+                                  <span>Upload to Contracts</span>
+                                  <ArrowRight className="w-4 h-4" />
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
             </div>
-            <ToggleSwitch checked={slackNotifications} onChange={setSlackNotifications} />
+                  )}
           </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">Renewal Reminders</h4>
-              <p className="text-sm text-gray-500">Automatic reminders before contract expiration</p>
+              )}
+
+              {sharepointError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <span className="text-sm text-red-700">{sharepointError}</span>
             </div>
-            <ToggleSwitch checked={renewalReminders} onChange={setRenewalReminders} />
           </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900">Weekly Reports</h4>
-              <p className="text-sm text-gray-500">Weekly summary of contract activities</p>
+              )}
             </div>
-            <ToggleSwitch checked={weeklyReports} onChange={setWeeklyReports} />
-          </div>
+          ))}
         </div>
-      </div> */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Data Export */}
-        {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="font-medium text-gray-900 mb-4">Data Export</h3>
-          
-          <div className="space-y-3">
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
-              Export All Contracts
-            </button>
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
-              Export Settings
-            </button>
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
-              Download Audit Log
-            </button>
-          </div>
-        </div> */}
-
-        {/* Support */}
-        {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="font-medium text-gray-900 mb-4">Support</h3>
-          
-          <div className="space-y-3">
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
-              Contact Support
-            </button>
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
-              Documentation
-            </button>
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
-              Feature Requests
-            </button>
-          </div>
-        </div> */}
       </div>
     </div>
   );

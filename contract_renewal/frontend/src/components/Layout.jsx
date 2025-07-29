@@ -108,13 +108,13 @@ const Layout = ({ children, activeTab, onTabChange, user, contracts }) => {
                   className="relative p-2 text-gray-400 hover:text-gray-500"
                   onClick={() => setShowNotifications((prev) => !prev)}
                 >
-                  <Bell className="w-5 h-5" />
-                  {notificationCount > 0 && (
-                    <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                      {notificationCount}
-                    </span>
-                  )}
-                </button>
+                <Bell className="w-5 h-5" />
+                {notificationCount > 0 && (
+                  <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                    {notificationCount}
+                  </span>
+                )}
+              </button>
                 {showNotifications && (
                   <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                     <div className="p-4 border-b font-semibold text-gray-900">Expiring in 30 Days</div>
